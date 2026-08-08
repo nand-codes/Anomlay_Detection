@@ -1,0 +1,775 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R 10 0 R 12 0 R] /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Length 4253 >>
+stream
+BT
+/F2 16 Tf
+1 0 0 1 54 738 Tm
+(Enterprise AI Network Intelligence Platform) Tj
+ET
+BT
+/F2 11 Tf
+1 0 0 1 54 712 Tm
+(Implementation Plan) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 697 Tm
+(Build an Enterprise AI Network Intelligence Platform with Kafka-backed high-volume) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 684 Tm
+(simulated KPI ingestion, Isolation Forest + LSTM anomaly detection, forecasting, RAG) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 671 Tm
+(root-cause analysis, MLflow, and local Kubernetes \(kind/k3d\) first ? Helm charts) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 658 Tm
+(designed for later cloud promotion.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 641 Tm
+(1. Locked Decisions) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 622 Tm
+(- Data: High-volume simulated network KPIs; ingestion via Kafka \(Redpanda for local) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 609 Tm
+(   simplicity, Kafka-compatible\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 596 Tm
+(- Runtime: Local Kubernetes first \(kind or k3d\); Helm charts reusable for EKS/GKE/AKS) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 583 Tm
+(   later.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 570 Tm
+(- LLM \(default\): OpenAI API for RAG RCA; swap to Azure OpenAI/Ollama via config.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 557 Tm
+(- Dashboards: Custom React executive dashboard + Grafana for ops/ML metrics.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 540 Tm
+(2. Architecture Overview) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 521 Tm
+(Simulator -> Redpanda/Kafka -> Ingest Workers -> TimescaleDB. TimescaleDB feeds Anomaly) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 508 Tm
+(Service, Forecast Service, and RAG RCA. Anomalies drive Alert Router \(Slack/Email\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 495 Tm
+(MLflow tracks experiments; retrain pipeline promotes models. Prometheus/Grafana monitor) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 482 Tm
+(the platform. API Gateway serves the Executive Dashboard.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 465 Tm
+(3. Core Data Flow) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 446 Tm
+(1. Simulator emits multi-device KPIs \(latency, packet loss, CPU, interface util, error) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 433 Tm
+(   rates\) at high rate into Kafka topics.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 420 Tm
+(2. Ingest workers batch-consume, validate, write to TimescaleDB, expose Prometheus) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 407 Tm
+(   metrics.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 394 Tm
+(3. Online anomaly \(Isolation Forest for multivariate point anomalies; LSTM for) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 381 Tm
+(   sequential\) and forecasting services read recent windows from TSDB.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 368 Tm
+(4. On anomaly/forecast breach -> Alert Router \(email + Slack\) + RAG RCA \(retrieve) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 355 Tm
+(   runbooks/topology + LLM explanation\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 342 Tm
+(5. MLflow tracks experiments; scheduled retrain job pulls labeled/windowed data, logs) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 329 Tm
+(   models, promotes via registry for K8s rollouts.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 312 Tm
+(4. What is Redpanda?) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 293 Tm
+(Redpanda is a streaming platform that speaks the Kafka protocol. Producers and consumers) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 280 Tm
+(use the same Kafka client libraries, but Redpanda is a single binary \(no ZooKeeper/KRaft) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 267 Tm
+(ops overhead\), which makes local Kubernetes setup much simpler than Apache Kafka.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 254 Tm
+(- Redpanda = the message bus / buffer between the simulator and the database.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 241 Tm
+(- It holds recent KPI events in topics until ingest workers catch up.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 228 Tm
+(- It is NOT the long-term analytics store.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 215 Tm
+(- Later you can swap Redpanda for Amazon MSK / Confluent Cloud without rewriting) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 202 Tm
+(   producers/consumers.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 185 Tm
+(5. How Data Injection \(Simulation\) Works) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 166 Tm
+(We do not pull from real routers in v1. A Python service kpi-simulator generates fake) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 153 Tm
+(but realistic network telemetry and publishes it to Kafka/Redpanda.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 140 Tm
+(- Config: number of devices, metrics per device, target messages/sec, fault injection) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 3947 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 54 738 Tm
+(   rate.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 725 Tm
+(- Each message: { "ts", "device_id", "site", "metric", "value" }.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 712 Tm
+(- Normal traffic: baselines + noise \(sine/diurnal patterns\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 699 Tm
+(- Fault injection: periodically spike latency, packet loss, or CPU for anomaly) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 686 Tm
+(   detection.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 673 Tm
+(- Partition key = device_id \(ordered per device, parallel across devices\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 660 Tm
+(- Why Kafka in front of DB: absorbs bursts; workers batch-write at a sustainable rate.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 643 Tm
+(6. Where Data is Stored) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 624 Tm
+(- In-flight KPI events: Redpanda topics \(kpis.raw, kpis.anomalies\) ? buffer/stream.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 611 Tm
+(- Historical KPI time series: TimescaleDB hypertable kpi_samples ? source of truth.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 598 Tm
+(- Dashboard rollups: TimescaleDB continuous aggregates ? fast executive UI queries.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 585 Tm
+(- Anomaly / forecast results: TimescaleDB tables \(anomalies, forecasts\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 572 Tm
+(- Runbooks / topology for RAG: pgvector \(same Postgres\) or Chroma.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 559 Tm
+(- Trained models + artifacts: MLflow metadata DB + MinIO object storage.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 546 Tm
+(- Ops metrics: Prometheus ? Grafana monitoring only \(separate from network KPIs\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 533 Tm
+(Mental model: Simulator -> Redpanda \(pipe\) -> TimescaleDB \(warehouse\) -> ML + Dashboard.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 520 Tm
+(Prometheus/Grafana watch the platform itself; they do not store business KPI history.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 503 Tm
+(7. Requirements / Setup) Tj
+ET
+BT
+/F2 11 Tf
+1 0 0 1 54 482 Tm
+(Machine / tooling) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 467 Tm
+(- Docker Desktop \(or Docker Engine\) with 16 GB+ RAM \(32 GB ideal\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 454 Tm
+(- kubectl, Helm 3, kind or k3d.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 441 Tm
+(- Python 3.11+, Node.js 20+, Git.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 428 Tm
+(- Optional GPU for LSTM training \(CPU OK for v1 with smaller models\).) Tj
+ET
+BT
+/F2 11 Tf
+1 0 0 1 54 413 Tm
+(Accounts / secrets) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 398 Tm
+(- OpenAI API key \(or Ollama local endpoint\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 385 Tm
+(- SMTP credentials \(email alerts\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 372 Tm
+(- Slack Incoming Webhook or Bot token.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 359 Tm
+(- Optional: cloud registry later \(ECR/GCR/ACR\).) Tj
+ET
+BT
+/F2 11 Tf
+1 0 0 1 54 344 Tm
+(Local cluster) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 329 Tm
+(- kind/k3d cluster with ingress \(nginx\) and storage class.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 316 Tm
+(- Namespaces: platform, ml, observability, streaming.) Tj
+ET
+BT
+/F2 11 Tf
+1 0 0 1 54 301 Tm
+(Runtime stack \(v1\)) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 286 Tm
+(- Streaming: Redpanda \(Kafka API\)) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 273 Tm
+(- KPI store: TimescaleDB \(Postgres + hypertables\)) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 260 Tm
+(- Vector DB: pgvector on same Postgres or Chroma) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 247 Tm
+(- API: FastAPI \(Python\)) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 234 Tm
+(- ML: scikit-learn \(Isolation Forest\), PyTorch \(LSTM\), Prophet/LSTM for forecast) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 221 Tm
+(- Tracking: MLflow + MinIO) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 208 Tm
+(- Orchestration: Argo Workflows or CronJob for v1) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 195 Tm
+(- Metrics: Prometheus + Alertmanager) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 182 Tm
+(- Viz: Grafana + React \(Vite\) executive UI) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 169 Tm
+(- Deploy: Helm charts, Docker images) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 152 Tm
+(8. Repository Layout) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 133 Tm
+(enterprise-netintel/) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Length 3874 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 54 738 Tm
+(  apps/kpi-simulator/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 725 Tm
+(  apps/ingest-worker/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 712 Tm
+(  apps/anomaly-service/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 699 Tm
+(  apps/forecast-service/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 686 Tm
+(  apps/rca-service/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 673 Tm
+(  apps/alert-router/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 660 Tm
+(  apps/api-gateway/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 647 Tm
+(  apps/executive-dashboard/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 634 Tm
+(  ml/training/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 621 Tm
+(  ml/pipelines/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 608 Tm
+(  infra/helm/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 595 Tm
+(  infra/kind/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 582 Tm
+(  infra/grafana/dashboards/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 569 Tm
+(  infra/prometheus/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 556 Tm
+(  docs/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 543 Tm
+(  docker-compose.dev.yml) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 526 Tm
+(9. Implementation Phases) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 507 Tm
+(- Phase 0 ? Bootstrap: monorepo, git, Makefile, .env.example, Dockerfiles, kind + Helm) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 494 Tm
+(   scaffolding.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 481 Tm
+(- Phase 1 ? Streaming: Redpanda topics, simulator, ingest workers, TimescaleDB) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 468 Tm
+(   hypertables, Prometheus metrics.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 455 Tm
+(- Phase 2 ? Anomaly + forecasting: Isolation Forest + LSTM, forecast service, MLflow) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 442 Tm
+(   logging, model registry.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 429 Tm
+(- Phase 3 ? RAG RCA + alerting: runbook corpus, RCA service, Slack/email alert router,) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 416 Tm
+(   Alertmanager.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 403 Tm
+(- Phase 4 ? Dashboards: React executive UI, Grafana ops dashboards, FastAPI gateway.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 390 Tm
+(- Phase 5 ? Retraining: CronJob/Argo export -> train -> evaluate -> promote.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 377 Tm
+(- Phase 6 ? Cloud readiness: same Helm charts, registry + CI, cloud secrets \(later\).) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 360 Tm
+(10. Design Choices for Large Simulated Data) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 341 Tm
+(- Kafka partitions aligned with device cardinality for parallel consumers.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 328 Tm
+(- Batch writes \(COPY / multi-row INSERT\), compression on topics.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 315 Tm
+(- Continuous aggregates instead of raw scans for executive UI.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 302 Tm
+(- Separate online inference path from offline training path.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 289 Tm
+(- Resource quotas in K8s so simulator cannot starve ML/API pods.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 272 Tm
+(11. Success Criteria \(v1 Demo\)) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 253 Tm
+(- Sustained simulated ingest \(tunable, e.g. 10k?100k msgs/sec depending on hardware\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 240 Tm
+(- Anomalies visible in dashboard within seconds of fault injection.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 227 Tm
+(- Forecast charts + Isolation Forest / LSTM scores.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 214 Tm
+(- RCA paragraph + linked runbook snippets on alert.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 201 Tm
+(- MLflow UI showing at least one train run; CronJob retrains successfully.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 188 Tm
+(- Grafana + Prometheus scraping all services; Slack/email on injected anomaly.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 54 171 Tm
+(12. Out of Scope for v1) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 152 Tm
+(- Real SNMP/NetFlow adapters \(interface stubs only\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 139 Tm
+(- Multi-tenant RBAC / SSO \(basic auth or open local\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 126 Tm
+(- Full Kubeflow stack \(MLflow + Argo is enough\).) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 113 Tm
+(- Production HA multi-AZ cloud hardening.) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 9 0 R >>
+endobj
+11 0 obj
+<< /Length 972 >>
+stream
+BT
+/F2 13 Tf
+1 0 0 1 54 734 Tm
+(13. Implementation Todos) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 715 Tm
+(1. Create enterprise-netintel monorepo, git, Docker/Helm/kind scaffolding, .env.example) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 702 Tm
+(2. Deploy Redpanda + TimescaleDB; build KPI simulator and ingest workers with Prometheus) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 689 Tm
+(   metrics) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 676 Tm
+(3. Implement anomaly \(Isolation Forest + LSTM\) and forecast services with MLflow) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 663 Tm
+(   tracking) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 650 Tm
+(4. Build RAG RCA service, runbook corpus, Slack/email alert router) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 637 Tm
+(5. React executive dashboard + Grafana dashboards + FastAPI gateway) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 624 Tm
+(6. Automatic retrain pipeline \(CronJob/Argo\) with model promotion) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 54 611 Tm
+(7. Umbrella Helm chart, deploy full stack on kind/k3d, document runbook) Tj
+ET
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 11 0 R >>
+endobj
+xref
+0 13
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000135 00000 n 
+0000000205 00000 n 
+0000000280 00000 n 
+0000004585 00000 n 
+0000004721 00000 n 
+0000008720 00000 n 
+0000008856 00000 n 
+0000012782 00000 n 
+0000012919 00000 n 
+0000013943 00000 n 
+trailer
+<< /Size 13 /Root 1 0 R >>
+startxref
+14081
+%%EOF

@@ -1,0 +1,13 @@
+kafka_bootstrap: localhost:19092
+kpi_topic: kpis.raw
+consumer_group: ingest-worker
+auto_offset_reset: latest  # use earliest to backfill existing Redpanda backlog
+
+database_url: postgresql://netintel:netintel@localhost:5432/netintel
+
+batch_size: 500
+batch_timeout_sec: 1.0
+poll_timeout_sec: 1.0
+
+metrics_port: 9101
+log_interval_sec: 10

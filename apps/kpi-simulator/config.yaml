@@ -1,0 +1,17 @@
+kafka_bootstrap: localhost:19092
+kpi_topic: kpis.raw
+sites:
+- siteA
+- siteB
+- siteC
+metrics:
+- latency_ms
+- packet_loss_pct
+- cpu_pct
+- interface_util_pct
+- error_rate
+interval_sec: 900
+align_to_boundary: true
+fault_injection_rate: 0.05
+fault_duration_sec: 3600
+metrics_port: 9100

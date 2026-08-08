@@ -1,0 +1,4 @@
+confluent-kafka>=2.6.0
+pydantic-settings>=2.6.0
+prometheus-client>=0.21.0
+PyYAML>=6.0.2

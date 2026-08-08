@@ -1,0 +1,18 @@
+# NetIntel platform config — simulation cadence + Redpanda topic retention
+# Copy to config.yaml and adjust. Then run: .\scripts\pipeline.ps1 start
+#
+# interval_sec controls:
+#   - KPI simulator emission cadence (default 15 min)
+#   - Redpanda kpis.raw retention when kpi_topic_retention_ms is omitted
+
+interval_sec: 900
+align_to_boundary: true
+
+# Redpanda buffer retention (ms). Omit or set null to auto-derive: interval_sec * 1000
+# kpi_topic_retention_ms: 900000
+
+kpi_topic: kpis.raw
+kpi_topic_partitions: 12
+
+fault_injection_rate: 0.05
+fault_duration_sec: 3600

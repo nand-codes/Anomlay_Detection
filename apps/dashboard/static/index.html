@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NetIntel Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #121a24;
+    }
+    header h1 { margin: 0; font-size: 1.35rem; font-weight: 600; }
+    header .meta { color: var(--muted); font-size: 0.875rem; }
+    main { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+    .grid { display: grid; gap: 1rem; }
+    .cards { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .two-col { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 960px) { .two-col { grid-template-columns: 1fr; } }
+    .card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+    }
+    .card .label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .card .value { font-size: 1.6rem; font-weight: 700; margin-top: 0.25rem; }
+    .panel h2 {
+      margin: 0 0 1rem;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge.ok { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge.warn { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .badge.err { background: rgba(239,68,68,0.15); color: var(--red); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    th, td { padding: 0.55rem 0.4rem; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-weight: 600; }
+    tr:hover td { background: rgba(59,130,246,0.06); }
+    .controls { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    select, button {
+      background: #0f1724;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.7rem;
+      font-size: 0.875rem;
+    }
+    button { cursor: pointer; background: var(--accent); border-color: var(--accent); }
+    button:hover { filter: brightness(1.08); }
+    .chart-wrap { height: 280px; }
+    .links { margin-top: 0.75rem; font-size: 0.85rem; }
+    .links a { color: var(--accent); text-decoration: none; margin-right: 1rem; }
+    .error { color: var(--red); font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>NetIntel Dashboard</h1>
+      <div class="meta">Redpanda broker + TimescaleDB overview</div>
+    </div>
+    <div class="meta" id="last-updated">Loading...</div>
+  </header>
+
+  <main class="grid" style="gap: 1.25rem;">
+    <section class="grid cards" id="summary-cards"></section>
+
+    <section class="grid two-col">
+      <div class="panel">
+        <h2>Redpanda Broker <span id="broker-status" class="badge warn">...</span></h2>
+        <div id="broker-summary"></div>
+        <table>
+          <thead>
+            <tr><th>Partition</th><th>Low</th><th>High</th><th>Messages</th></tr>
+          </thead>
+          <tbody id="broker-partitions"></tbody>
+        </table>
+        <div class="links">
+          <a href="http://localhost:8080" target="_blank">Redpanda Console</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>TimescaleDB <span class="badge ok">kpi_site_samples</span></h2>
+        <div id="timescale-summary"></div>
+        <table>
+          <thead>
+            <tr><th>Site</th><th>Metric</th><th>Rows</th><th>Avg</th><th>Last</th></tr>
+          </thead>
+          <tbody id="timescale-stats"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>KPI Trend</h2>
+      <div class="controls">
+        <select id="chart-site">
+          <option value="siteA">siteA</option>
+          <option value="siteB">siteB</option>
+          <option value="siteC">siteC</option>
+        </select>
+        <select id="chart-metric">
+          <option value="latency_ms">latency_ms</option>
+          <option value="packet_loss_pct">packet_loss_pct</option>
+          <option value="cpu_pct">cpu_pct</option>
+          <option value="interface_util_pct">interface_util_pct</option>
+          <option value="error_rate">error_rate</option>
+        </select>
+        <button id="refresh-btn" type="button">Refresh now</button>
+      </div>
+      <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
+    </section>
+
+    <section class="panel">
+      <h2>Latest KPI readings</h2>
+      <table>
+        <thead>
+          <tr><th>Timestamp (UTC)</th><th>Site</th><th>Metric</th><th>Value</th></tr>
+        </thead>
+        <tbody id="latest-rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    let chart;
+
+    function fmt(n) {
+      if (n === null || n === undefined) return "-";
+      return typeof n === "number" ? n.toLocaleString() : n;
+    }
+
+    function setBrokerStatus(healthy) {
+      const el = document.getElementById("broker-status");
+      if (!el) return;
+      el.className = `badge ${healthy ? "ok" : "err"}`;
+      el.textContent = healthy ? "Healthy" : "Unhealthy";
+    }
+
+    function setStatusMessage(message, isError = false) {
+      const el = document.getElementById("last-updated");
+      if (!el) return;
+      el.textContent = message;
+      el.className = isError ? "meta error" : "meta";
+    }
+
+    function populateSelectors(stats) {
+      const sites = [...new Set((stats.items || []).map((i) => i.site))];
+      const metrics = [...new Set((stats.items || []).map((i) => i.metric))];
+      const defaultSites = ["siteA", "siteB", "siteC"];
+      const defaultMetrics = [
+        "latency_ms",
+        "packet_loss_pct",
+        "cpu_pct",
+        "interface_util_pct",
+        "error_rate",
+      ];
+      const siteList = sites.length ? sites : defaultSites;
+      const metricList = metrics.length ? metrics : defaultMetrics;
+
+      const siteSel = document.getElementById("chart-site");
+      const metricSel = document.getElementById("chart-metric");
+      const prevSite = siteSel.value;
+      const prevMetric = metricSel.value;
+
+      siteSel.innerHTML = siteList.map((s) => `<option value="${s}">${s}</option>`).join("");
+      metricSel.innerHTML = metricList.map((m) => `<option value="${m}">${m}</option>`).join("");
+
+      if (siteList.includes(prevSite)) siteSel.value = prevSite;
+      if (metricList.includes(prevMetric)) metricSel.value = prevMetric;
+    }
+
+    async function fetchJson(path) {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+      return res.json();
+    }
+
+    function renderSummary(overview) {
+      const ts = overview.timescale || {};
+      const br = overview.broker || {};
+      const topic = br.topic || {};
+      const cards = [
+        ["DB rows", fmt(ts.total_rows)],
+        ["Sites in DB", fmt(ts.site_count)],
+        ["Metrics in DB", fmt(ts.metric_count)],
+        ["Broker messages", fmt(topic.total_messages)],
+        ["Topic partitions", fmt(topic.partition_count)],
+        ["Last DB bucket", ts.last_ts || "-"],
+      ];
+      document.getElementById("summary-cards").innerHTML = cards.map(([label, value]) => `
+        <div class="card"><div class="label">${label}</div><div class="value">${value}</div></div>
+      `).join("");
+    }
+
+    function renderBroker(broker) {
+      setBrokerStatus(Boolean(broker && broker.healthy));
+      const topic = (broker && broker.topic) || {};
+      document.getElementById("broker-summary").innerHTML = `
+        <p><strong>Topic:</strong> ${topic.topic || "-"} &nbsp;|&nbsp;
+        <strong>Bootstrap:</strong> ${(broker && broker.bootstrap) || "-"}</p>
+        <p><strong>Total messages in topic:</strong> ${fmt(topic.total_messages)}</p>
+      `;
+      const rows = (topic.partitions || []).map(p => `
+        <tr>
+          <td>${p.partition}</td>
+          <td>${fmt(p.low_offset)}</td>
+          <td>${fmt(p.high_offset)}</td>
+          <td>${fmt(p.message_count)}</td>
+        </tr>
+      `).join("");
+      document.getElementById("broker-partitions").innerHTML = rows || `<tr><td colspan="4">No partitions</td></tr>`;
+    }
+
+    function renderTimescale(stats, latest) {
+      document.getElementById("timescale-stats").innerHTML = (stats.items || []).map(r => `
+        <tr>
+          <td>${r.site}</td>
+          <td>${r.metric}</td>
+          <td>${fmt(r.row_count)}</td>
+          <td>${fmt(r.avg_value)}</td>
+          <td>${r.last_ts || "-"}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="5">No data yet — run simulator + ingest</td></tr>`;
+
+      document.getElementById("latest-rows").innerHTML = (latest.items || []).map(r => `
+        <tr>
+          <td>${r.ts}</td>
+          <td>${r.site}</td>
+          <td>${r.metric}</td>
+          <td>${r.value}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="4">No readings yet</td></tr>`;
+
+      populateSelectors(stats);
+
+      const summary = document.getElementById("timescale-summary");
+      if (summary) {
+        const total = (stats.items || []).reduce((sum, row) => sum + Number(row.row_count || 0), 0);
+        summary.innerHTML = `<p><strong>Total site/metric series:</strong> ${(stats.items || []).length} &nbsp;|&nbsp; <strong>Total rows:</strong> ${fmt(total)}</p>`;
+      }
+    }
+
+    async function renderChart() {
+      if (typeof Chart === "undefined") {
+        throw new Error("Chart.js failed to load — check network or CDN access");
+      }
+
+      const siteEl = document.getElementById("chart-site");
+      const metricEl = document.getElementById("chart-metric");
+      const site = siteEl.value || "siteA";
+      const metric = metricEl.value || "latency_ms";
+
+      const data = await fetchJson(
+        `/api/timescale/timeseries?site=${encodeURIComponent(site)}&metric=${encodeURIComponent(metric)}`
+      );
+      const points = data.points || [];
+      const labels = points.map((p) => p.ts);
+      const values = points.map((p) => p.value);
+      const ctx = document.getElementById("trend-chart");
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels.length ? labels : ["No data yet"],
+          datasets: [{
+            label: `${site} / ${metric}`,
+            data: values.length ? values : [0],
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,0.15)",
+            fill: true,
+            tension: 0.25,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: "#e7ecf3" } } },
+          scales: {
+            x: { ticks: { color: "#8b9cb3", maxTicksLimit: 8 } },
+            y: { ticks: { color: "#8b9cb3" } },
+          },
+        },
+      });
+    }
+
+    async function refreshAll() {
+      try {
+        const [overview, stats, latest] = await Promise.all([
+          fetchJson("/api/overview"),
+          fetchJson("/api/timescale/stats"),
+          fetchJson("/api/timescale/latest?limit=30"),
+        ]);
+        renderSummary(overview);
+        renderBroker(overview.broker || {});
+        renderTimescale(stats, latest);
+        await renderChart();
+        setStatusMessage(`Updated ${new Date().toLocaleString()}`);
+      } catch (err) {
+        console.error(err);
+        setStatusMessage(`Error: ${err.message}`, true);
+      }
+    }
+
+    document.getElementById("refresh-btn").addEventListener("click", () => {
+      refreshAll();
+    });
+    document.getElementById("chart-site").addEventListener("change", () => {
+      renderChart().catch((err) => setStatusMessage(`Chart error: ${err.message}`, true));
+    });
+    document.getElementById("chart-metric").addEventListener("change", () => {
+      renderChart().catch((err) => setStatusMessage(`Chart error: ${err.message}`, true));
+    });
+    populateSelectors({ items: [] });
+    refreshAll();
+    setInterval(refreshAll, 30000);
+  </script>
+</body>
+</html>

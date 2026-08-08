@@ -1,0 +1,26 @@
+# KPI simulator — interval-based site-level telemetry
+# Change interval_sec for 5 min (300), 30 sec (30), etc.
+
+kafka_bootstrap: localhost:19092
+kpi_topic: kpis.raw
+
+sites:
+  - siteA
+  - siteB
+  - siteC
+
+metrics:
+  - latency_ms
+  - packet_loss_pct
+  - cpu_pct
+  - interface_util_pct
+  - error_rate
+
+# Default: every 15 minutes at aligned wall-clock buckets (12:00, 12:15, 12:30, ...)
+interval_sec: 900
+align_to_boundary: true
+
+fault_injection_rate: 0.05
+fault_duration_sec: 3600
+
+metrics_port: 9100
