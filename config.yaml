@@ -16,3 +16,9 @@ kpi_topic_partitions: 12
 
 fault_injection_rate: 0.05
 fault_duration_sec: 3600
+
+seed_demo_days: 2
+
+forecast_horizon_hours: 4
+forecast_min_history_points: 48
+forecast_model: ets

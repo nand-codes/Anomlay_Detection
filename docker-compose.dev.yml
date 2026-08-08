@@ -166,3 +166,25 @@ services:
       timescaledb:
         condition: service_healthy
     restart: unless-stopped
+
+  forecast-service:
+    profiles: ["forecast"]
+    build:
+      context: ./apps/forecast-service
+    container_name: forecast-service
+    networks:
+      - redpanda_network
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-netintel}:${POSTGRES_PASSWORD:-netintel}@timescaledb:5432/${POSTGRES_DB:-netintel}
+      INTERVAL_SEC: ${INTERVAL_SEC:-900}
+      FORECAST_HORIZON_HOURS: ${FORECAST_HORIZON_HOURS:-4}
+      FORECAST_MIN_HISTORY_POINTS: ${FORECAST_MIN_HISTORY_POINTS:-48}
+      FORECAST_MODEL: ${FORECAST_MODEL:-ets}
+      RUN_ONCE: "false"
+      METRICS_PORT: 9102
+    ports:
+      - "${FORECAST_METRICS_PORT:-9102}:9102"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped

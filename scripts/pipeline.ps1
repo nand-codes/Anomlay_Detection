@@ -105,8 +105,8 @@ Edit config.yaml (interval_sec, retention) then run sync or start.
 
         Invoke-Topics
 
-        & docker @Compose --profile sim --profile ingest up -d --build kpi-simulator ingest-worker
-        if ($LASTEXITCODE -ne 0) { throw "Failed to start simulator/ingest" }
+        & docker @Compose --profile sim --profile ingest --profile forecast up -d --build kpi-simulator ingest-worker forecast-service dashboard
+        if ($LASTEXITCODE -ne 0) { throw "Failed to start simulator/ingest/forecast" }
 
         $intervalMin = [int]($env:INTERVAL_SEC / 60)
         $retentionMin = [int]($env:KPI_TOPIC_RETENTION_MS / 60000)
@@ -118,11 +118,12 @@ Edit config.yaml (interval_sec, retention) then run sync or start.
         Write-Host "  Redpanda Console:    http://localhost:8080"
         Write-Host "  Simulator metrics:   http://localhost:9100/metrics"
         Write-Host "  Ingest metrics:      http://localhost:9101/metrics"
+        Write-Host "  Forecast metrics:    http://localhost:9102/metrics"
     }
     "stop" {
         Assert-Docker
-        & docker @Compose --profile sim --profile ingest stop kpi-simulator ingest-worker
-        Write-Host "Stopped simulator and ingest worker."
+        & docker @Compose --profile sim --profile ingest --profile forecast stop kpi-simulator ingest-worker forecast-service
+        Write-Host "Stopped simulator, ingest worker, and forecast service."
     }
     "status" {
         Assert-Docker

@@ -126,7 +126,7 @@
     </section>
 
     <section class="panel">
-      <h2>KPI Trend</h2>
+      <h2>KPI Trend (actual + 4h forecast)</h2>
       <div class="controls">
         <select id="chart-site">
           <option value="siteA">siteA</option>
@@ -212,15 +212,16 @@
 
     function renderSummary(overview) {
       const ts = overview.timescale || {};
+      const fc = overview.forecasts || {};
       const br = overview.broker || {};
       const topic = br.topic || {};
       const cards = [
         ["DB rows", fmt(ts.total_rows)],
+        ["Forecast rows", fmt(fc.total_rows)],
         ["Sites in DB", fmt(ts.site_count)],
-        ["Metrics in DB", fmt(ts.metric_count)],
+        ["Forecast series", fmt(fc.series_count)],
         ["Broker messages", fmt(topic.total_messages)],
-        ["Topic partitions", fmt(topic.partition_count)],
-        ["Last DB bucket", ts.last_ts || "-"],
+        ["Last forecast", fc.last_run || "-"],
       ];
       document.getElementById("summary-cards").innerHTML = cards.map(([label, value]) => `
         <div class="card"><div class="label">${label}</div><div class="value">${value}</div></div>
@@ -285,33 +286,60 @@
       const site = siteEl.value || "siteA";
       const metric = metricEl.value || "latency_ms";
 
-      const data = await fetchJson(
-        `/api/timescale/timeseries?site=${encodeURIComponent(site)}&metric=${encodeURIComponent(metric)}`
-      );
-      const points = data.points || [];
-      const labels = points.map((p) => p.ts);
-      const values = points.map((p) => p.value);
+      const [actual, forecast] = await Promise.all([
+        fetchJson(`/api/timescale/timeseries?site=${encodeURIComponent(site)}&metric=${encodeURIComponent(metric)}`),
+        fetchJson(`/api/timescale/forecast?site=${encodeURIComponent(site)}&metric=${encodeURIComponent(metric)}`),
+      ]);
+
+      const actualPoints = actual.points || [];
+      const forecastPoints = forecast.points || [];
+      const labels = [
+        ...actualPoints.map((p) => p.ts),
+        ...forecastPoints.map((p) => p.forecast_ts),
+      ];
+      const actualValues = [
+        ...actualPoints.map((p) => p.value),
+        ...forecastPoints.map(() => null),
+      ];
+      const forecastValues = [
+        ...actualPoints.map(() => null),
+        ...forecastPoints.map((p) => p.predicted_value),
+      ];
+
       const ctx = document.getElementById("trend-chart");
       if (chart) chart.destroy();
       chart = new Chart(ctx, {
         type: "line",
         data: {
           labels: labels.length ? labels : ["No data yet"],
-          datasets: [{
-            label: `${site} / ${metric}`,
-            data: values.length ? values : [0],
-            borderColor: "#3b82f6",
-            backgroundColor: "rgba(59,130,246,0.15)",
-            fill: true,
-            tension: 0.25,
-          }],
+          datasets: [
+            {
+              label: `${site} / ${metric} (actual)`,
+              data: actualValues.length ? actualValues : [0],
+              borderColor: "#3b82f6",
+              backgroundColor: "rgba(59,130,246,0.15)",
+              fill: true,
+              tension: 0.25,
+              spanGaps: false,
+            },
+            {
+              label: `${site} / ${metric} (forecast)`,
+              data: forecastValues.length ? forecastValues : [],
+              borderColor: "#f59e0b",
+              backgroundColor: "rgba(245,158,11,0.08)",
+              borderDash: [6, 4],
+              fill: false,
+              tension: 0.25,
+              spanGaps: false,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { labels: { color: "#e7ecf3" } } },
           scales: {
-            x: { ticks: { color: "#8b9cb3", maxTicksLimit: 8 } },
+            x: { ticks: { color: "#8b9cb3", maxTicksLimit: 10 } },
             y: { ticks: { color: "#8b9cb3" } },
           },
         },

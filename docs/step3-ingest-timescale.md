@@ -43,6 +43,18 @@ docker compose -f docker-compose.dev.yml up -d
 
 Expected: rows at aligned timestamps (`12:00`, `12:15`, `12:30`, …).
 
+## Seed demo history (for forecasting)
+
+Before building the forecast service, load **2 days** of backfilled KPIs (same sites, metrics, 15-min buckets, diurnal patterns + fault injection):
+
+```powershell
+.\scripts\seed.ps1 install
+.\scripts\seed.ps1 run          # default: 2 days
+.\scripts\seed.ps1 run -Days 3    # optional: more history
+```
+
+This inserts ~2,880 rows (192 buckets × 15 KPIs). Existing live rows are kept (`ON CONFLICT DO NOTHING`).
+
 ## Part C done when
 
 - [ ] Simulator publishes 15 KPIs per bucket

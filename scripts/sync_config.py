@@ -76,6 +76,9 @@ def sync_env(config: dict) -> None:
         "ALIGN_TO_BOUNDARY": "true" if config.get("align_to_boundary", True) else "false",
         "FAULT_INJECTION_RATE": str(config.get("fault_injection_rate", 0.05)),
         "FAULT_DURATION_SEC": str(config.get("fault_duration_sec", 3600)),
+        "FORECAST_HORIZON_HOURS": str(config.get("forecast_horizon_hours", 4)),
+        "FORECAST_MIN_HISTORY_POINTS": str(config.get("forecast_min_history_points", 48)),
+        "FORECAST_MODEL": str(config.get("forecast_model", "ets")),
     }
     for key, value in updates.items():
         lines = upsert_env(lines, key, value)

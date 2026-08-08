@@ -29,6 +29,7 @@ def index() -> FileResponse:
 def api_overview() -> dict:
     return {
         "timescale": timescale.overview(),
+        "forecasts": timescale.forecast_overview(),
         "broker": broker.overview(),
     }
 
@@ -53,6 +54,19 @@ def api_timescale_timeseries(
         "site": site,
         "metric": metric,
         "points": timescale.timeseries(site=site, metric=metric, limit=limit),
+    }
+
+
+@app.get("/api/timescale/forecast")
+def api_timescale_forecast(
+    site: str = Query(default="siteA"),
+    metric: str = Query(default="latency_ms"),
+) -> dict:
+    return {
+        "site": site,
+        "metric": metric,
+        "points": timescale.forecast_timeseries(site=site, metric=metric),
+        "overview": timescale.forecast_overview(),
     }
 
 

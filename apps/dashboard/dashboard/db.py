@@ -112,3 +112,50 @@ class TimescaleRepository:
             if isinstance(row.get("ts"), datetime):
                 row["ts"] = row["ts"].isoformat()
         return rows
+
+    def forecast_timeseries(self, site: str, metric: str) -> list[dict[str, Any]]:
+        rows = self._query(
+            """
+            SELECT f.forecast_ts, f.predicted_value, f.lower_bound, f.upper_bound,
+                   f.model_version, f.generated_at
+            FROM forecasts f
+            INNER JOIN (
+                SELECT site, metric, max(generated_at) AS generated_at
+                FROM forecasts
+                WHERE site = %s AND metric = %s
+                GROUP BY site, metric
+            ) latest
+              ON f.site = latest.site
+             AND f.metric = latest.metric
+             AND f.generated_at = latest.generated_at
+            WHERE f.site = %s AND f.metric = %s
+            ORDER BY f.forecast_ts ASC
+            """,
+            (site, metric, site, metric),
+        )
+        for row in rows:
+            for key in ("forecast_ts", "generated_at"):
+                if isinstance(row.get(key), datetime):
+                    row[key] = row[key].isoformat()
+            for key in ("predicted_value", "lower_bound", "upper_bound"):
+                if row.get(key) is not None:
+                    row[key] = float(row[key])
+        return rows
+
+    def forecast_overview(self) -> dict[str, Any]:
+        rows = self._query(
+            """
+            SELECT
+                count(*)::bigint AS total_rows,
+                count(DISTINCT site || '/' || metric) AS series_count,
+                max(generated_at) AS last_run
+            FROM forecasts
+            """
+        )
+        summary = rows[0] if rows else {}
+        last_run = summary.get("last_run")
+        if isinstance(last_run, datetime):
+            summary["last_run"] = last_run.isoformat()
+        summary["total_rows"] = int(summary.get("total_rows") or 0)
+        summary["series_count"] = int(summary.get("series_count") or 0)
+        return summary

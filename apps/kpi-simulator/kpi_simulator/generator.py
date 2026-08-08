@@ -114,11 +114,13 @@ class KpiGenerator:
         low, high = limits[metric]
         return max(low, min(high, value))
 
-    def generate_bucket(self, bucket_ts: datetime) -> list[KpiMessage]:
+    def generate_bucket(
+        self, bucket_ts: datetime, now_mono: float | None = None
+    ) -> list[KpiMessage]:
         """Emit one KPI per (site, metric) for the aligned bucket timestamp."""
-        now_mono = time.monotonic()
+        clock = time.monotonic() if now_mono is None else now_mono
         self.fault_started_this_tick = False
-        self._expire_faults(now_mono)
+        self._expire_faults(clock)
 
         if bucket_ts.tzinfo is None:
             bucket_ts = bucket_ts.replace(tzinfo=timezone.utc)
@@ -127,7 +129,7 @@ class KpiGenerator:
         messages: list[KpiMessage] = []
 
         for site in self.settings.sites:
-            self._maybe_start_fault(site, now_mono)
+            self._maybe_start_fault(site, clock)
             for metric in self.settings.metrics:
                 value = self._baseline(site, metric)
                 value *= self._diurnal_factor(bucket_ts)
